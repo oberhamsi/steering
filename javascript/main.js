@@ -100,7 +100,13 @@ function drawVehicleHud(display, vehicle) {
    display.blit(HUD_FONT.render('Speed ' + (''+$v.len(vehicle.velocity)).substring(0,5)), vehicle.rect.bottomleft);
 
 };
-
+// disable normal browser mouse select
+function disableMouseSelect() {
+   // no text select on drag
+   document.body.style.webkitUserSelect = 'none';
+   // non right clickery
+   document.body.oncontextmenu = function() { return false; };
+}
 /**
  * MAIN
  */
@@ -130,6 +136,7 @@ gamejs.ready(function() {
    var SCREEN_DIMENSION = background.getSize();
    var display = gamejs.display.setMode(SCREEN_DIMENSION);
    // hackish, disable right click
+   disableMouseSelect();
    // hackish, attaching class property once ready thus image loaded
    CROSSHAIR_MOVE = gamejs.image.load('images/circle-02.png');
    display.blit(background);
@@ -138,7 +145,7 @@ gamejs.ready(function() {
    // frigattes
    for (var i=0;i<5; i++) {
       var v = new Vehicle();
-      v.mass = 8;
+      v.mass = 4;
       v.maxForce = 0.1;
       v.maxSpeed = 0.3; // per second
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Frigate.png'), [0.5, 0.5]);
@@ -157,8 +164,8 @@ gamejs.ready(function() {
    for (var i=0;i<1;i++) {
       var v = new Vehicle();
       v.mass = 24;
-      v.maxForce = 0.3;
-      v.maxSpeed = 0.2;
+      v.maxForce = 0.2;
+      v.maxSpeed = 0.15;
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Battleship.png'), [0.5, 0.5]);
       vehicles.add(v);
    }
@@ -191,7 +198,7 @@ gamejs.ready(function() {
          } else if (vehiclesClicked && vehiclesClicked.length) {
             // vehicle select?
             selectedVehicle = vehiclesClicked[0];
-            var soundName = UNIT_SELECTED_SOUNDS[Math.round(Math.random() * UNIT_SELECTED_SOUNDS.length - 1)];
+            var soundName = UNIT_SELECTED_SOUNDS[parseInt(Math.random() * UNIT_SELECTED_SOUNDS.length - 1)];
             (new gamejs.mixer.Sound(soundName)).play();
             gamejs.log('vehicle selected ', selectedVehicle);
          } else if (selectedVehicle || multiSelectedVehicles) {
@@ -213,6 +220,11 @@ gamejs.ready(function() {
          } else {
             selectRect = null;
          }
+      } else if((event.type === gamejs.event.MOUSE_UP) && event.button === 2) {
+         selectRect = null;
+         selectDown = null;
+         selectedVehicle = null;
+         multiSelectedVehicles = null;
       }
    };
 
