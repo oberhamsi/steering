@@ -49,9 +49,8 @@ function Vehicle() {
    };
 
    this.draw = function(display) {
-      var image = gamejs.transform.rotate(Vehicle.image, this.orientation);
-      var center = $v.subtract(this.position, $v.divide(image.getSize(), 2));
-      display.blit(image, center);
+      this.image = gamejs.transform.rotate(Vehicle.image, this.orientation);
+      display.blit(this.image, this.rect);
       /*
        debug physics
       var nextPosition = $v.add(this.position, $v.multiply(this.velocity, 10));
@@ -59,6 +58,10 @@ function Vehicle() {
       gamejs.draw.circle(display, '#ff0000', this.position, 10, 3);
       */
    };
+
+   $o.accessor(this, 'rect', function() {
+      return $v.subtract(this.position, $v.divide(this.image.getSize(), 2));
+   });
 
    return this;
 };
