@@ -137,7 +137,9 @@ gamejs.ready(function() {
    };
    for (var i=0;i<3;i++) {
       var v = new Vehicle();
-      v.mass = 0.1;
+      v.mass = 0.2;
+      v.maxForce = 0.5;
+      v.maxSpeed = 2;
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Fighter1.png'), [0.8, 0.8]);
       vehicles.add(v);
    }
@@ -145,8 +147,14 @@ gamejs.ready(function() {
     * handle events
     */
    var selectedVehicle = null;
+   var multiSelectedVehicles = [];
+   var selectDown = null;
+   var selectRect = null;
    function handle(event) {
-      if ((event.type === gamejs.event.MOUSE_UP) &&
+      if ((event.type === gamejs.event.MOUSE_DOWN) &&
+         (event.button === 0)) {
+         selectDown = event.pos;
+      } else if ((event.type === gamejs.event.MOUSE_UP) &&
            (event.button === 0) ) {
          var pos = event.pos;
          // if not in sea
@@ -154,21 +162,35 @@ gamejs.ready(function() {
          if (bg[0] + bg[1] + bg[2] + bg[3] === 0) {
             return;
          }
-         if (selectedVehicle) {
-            selectedVehicle.behaviour.target = pos;
+         var vehiclesClicked = vehicles.collidePoint(event.pos);
+         if (selectRect) {
+            multiSelectedVehicles = vehicles.sprites().filter(function(v) {
+               return (v.rect.collideRect(selectRect));
+            });
+         } else if (vehiclesClicked && vehiclesClicked.length) {
+            // vehicle select?
+            selectedVehicle = vehiclesClicked[0];
+            var soundName = UNIT_SELECTED_SOUNDS[Math.round(Math.random() * UNIT_SELECTED_SOUNDS.length - 1)];
+            (new gamejs.mixer.Sound(soundName)).play();
+            gamejs.log('vehicle selected ', selectedVehicle);
+         } else if (selectedVehicle || multiSelectedVehicles) {
+            (selectedVehicle && [selectedVehicle] || multiSelectedVehicles).forEach(function(v) {
+               v.behaviour.target = pos;
+            });
             var soundName = 'sounds/engine_' + Math.round(Math.random() * 1) + '.ogg';
             (new gamejs.mixer.Sound(soundName)).play();
             gamejs.log('Vehicle order confirmed ', pos);
             selectedVehicle = null;
+            multiSelectedVehicles = null;
+         }
+         selectRect = null;
+         selectDown = null;
+      } else if ((event.type === gamejs.event.MOUSE_MOTION) && selectDown) {
+         var delta = [event.pos[0] - selectDown[0], event.pos[1] - selectDown[1]];
+         if ($v.len(delta) > 10) {
+            selectRect = new gamejs.Rect(selectDown, [event.pos[0] - selectDown[0], event.pos[1] - selectDown[1]]);
          } else {
-            // vehicle select?
-            var vehiclesClicked = vehicles.collidePoint(event.pos);
-            if (vehiclesClicked.length) {
-               selectedVehicle = vehiclesClicked[0];
-               var soundName = UNIT_SELECTED_SOUNDS[Math.round(Math.random() * UNIT_SELECTED_SOUNDS.length - 1)];
-               (new gamejs.mixer.Sound(soundName)).play();
-               gamejs.log('vehicle selected ', selectedVehicle);
-            }
+            selectRect = null;
          }
       }
    };
@@ -180,6 +202,13 @@ gamejs.ready(function() {
       vehicles.update(msDuration);
       if (selectedVehicle && selectedVehicle.behaviour.target) {
          drawVehicleHud(display, selectedVehicle);
+      } else if (multiSelectedVehicles && multiSelectedVehicles.length) {
+         multiSelectedVehicles.forEach(function(v) {
+            drawVehicleHud(display, v);
+         });
+      }
+      if (selectRect) {
+         gamejs.draw.rect(display, '#0c0476', selectRect, 2);
       }
       vehicles.draw(display);
       gamejs.event.get().forEach(handle);
