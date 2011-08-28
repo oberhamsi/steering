@@ -7,6 +7,48 @@ var gamejs = require('gamejs');
 var $v = require('gamejs/utils/vectors');
 var $o = require('gamejs/utils/objects');
 var $m = require('gamejs/utils/math');
+
+function ProjectileCloud(pos, direction) {
+   ProjectileCloud.superConstructor.apply(this, arguments);
+
+   var particles = [];
+   this.pos = pos;
+   this.direction = direction;
+
+   this.update = function(msDuration) {
+      var speed = 5; // pixels per second
+      var delta = $v.multiply(this.direction, speed * (msDuration/1000));
+      this.rect.moveIp(delta);
+      return;
+   };
+
+   this.draw = function(display) {
+      display.blit(this.image, this.rect);
+   }
+
+   var max = [0, 0];
+   var min = [Infinity, Infinity];
+   var scatter = 20;
+   for (var i=0; i<10; i++) {
+      // FIXME not random, make predictable generator
+      var p = $v.add(pos, [scatter/2 - Math.random() * scatter, scatter/2 - Math.random() * scatter]);
+      min[0] = Math.min(min[0], p[0]);
+      max[0] = Math.max(max[0], p[0]);
+      min[1] = Math.min(min[1], p[1]);
+      max[1] = Math.max(max[1], p[1]);
+      particles.push(p);
+   };
+   var width = max[0] - min[0] || 1;
+   var height = max[1] - min[1] || 1;
+   this.rect = new gamejs.Rect(min, [width, height]);
+   this.image = new gamejs.Surface(this.rect);
+   particles.forEach(function(p) {
+      glowCircle(this.image, 'rgba(255, 0, 0,', $v.subtract(p, $v.subtract(pos, [width/2, height/2])), 1, 3);
+   }, this);
+   return this;
+};
+$o.extend(ProjectileCloud, gamejs.sprite.Sprite);
+
 /**
  *
  */
@@ -89,10 +131,10 @@ function disableMouseSelect() {
    document.body.oncontextmenu = function() { return false; };
 }
 
-function glowRect(display, rect, width) {
+function glowRect(surface, rect, width) {
    var r = rect.clone();
    var STEP_SIZE = 1;
-   gamejs.draw.rect(display, '#ffffff', rect, STEP_SIZE * 2);
+   gamejs.draw.rect(surface, '#ffffff', rect, STEP_SIZE * 2);
    for (var i=0;i<width;i++) {
       r.left -= STEP_SIZE;
       r.top -= STEP_SIZE;
@@ -100,7 +142,7 @@ function glowRect(display, rect, width) {
       r.width += STEP_SIZE*2;
       r.height += STEP_SIZE*2;
       var a = 0.5 - ( 0.48 *  (i/width) );
-      gamejs.draw.rect(display, 'rgba(12,4,118,' + a + ')', r, STEP_SIZE);
+      gamejs.draw.rect(surface, 'rgba(12,4,118,' + a + ')', r, STEP_SIZE);
    }
    return;
 }
@@ -157,43 +199,6 @@ gamejs.preload([
 ].concat(UNIT_SELECTED_SOUNDS));
 gamejs.ready(function() {
 
-   var background = gamejs.image.load('images/background.png');
-   var SCREEN_DIMENSION = background.getSize();
-   var display = gamejs.display.setMode(SCREEN_DIMENSION);
-   // hackish, disable right click
-   disableMouseSelect();
-   // hackish, attaching class property once ready thus image loaded
-   CROSSHAIR_MOVE = gamejs.image.load('images/circle-02.png');
-   display.blit(background);
-   var backgroundArray = new gamejs.surfacearray.SurfaceArray(display);
-   var vehicles = new gamejs.sprite.Group();
-   // frigattes
-   for (var i=0;i<5; i++) {
-      var v = new Vehicle();
-      v.mass = 4;
-      v.maxForce = 0.1;
-      v.maxSpeed = 0.3; // per second
-      v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Frigate.png'), [0.5, 0.5]);
-      vehicles.add(v);
-   };
-   // fighter
-   for (var i=0;i<10;i++) {
-      var v = new Vehicle();
-      v.mass = 0.06;
-      v.maxForce = 0.005;
-      v.maxSpeed = 0.7;
-      v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Fighter1.png'), [1, 1]);
-      vehicles.add(v);
-   }
-   // battleship
-   for (var i=0;i<1;i++) {
-      var v = new Vehicle();
-      v.mass = 24;
-      v.maxForce = 0.2;
-      v.maxSpeed = 0.15;
-      v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Battleship.png'), [0.5, 0.5]);
-      vehicles.add(v);
-   }
    /**
     * handle events
     */
@@ -210,11 +215,6 @@ gamejs.ready(function() {
       } else if ((event.type === gamejs.event.MOUSE_UP) &&
            (event.button === 0) ) {
          var pos = event.pos;
-         // if not in sea
-         var bg = backgroundArray.get(pos[0], pos[1]);
-         if (bg[0] + bg[1] + bg[2] + bg[3] === 0) {
-            return;
-         }
          var vehiclesClicked = vehicles.collidePoint(event.pos);
          if (selectRect) {
             multiSelectedVehicles = vehicles.sprites().filter(function(v) {
@@ -253,11 +253,23 @@ gamejs.ready(function() {
       }
    };
 
+   /**
+    * mainloop
+    *
+    */
    function tick(msDuration) {
       display.fill('#dddddd');
       display.blit(background);
       // game loop
+      clouds.update(msDuration);
       vehicles.update(msDuration);
+      // kill out of bounds clouds
+      clouds.forEach(function(c) {
+         if (!display.rect.collideRect(c.rect)) {
+            c.kill();
+            gamejs.log('Killed ', c);
+         }
+      });
       if (selectedVehicle && selectedVehicle.behaviour.target) {
          drawVehicleHud(display, selectedVehicle);
       } else if (multiSelectedVehicles && multiSelectedVehicles.length) {
@@ -269,7 +281,53 @@ gamejs.ready(function() {
          gamejs.draw.rect(display, '#0c0476', selectRect, 2);
       }
       vehicles.draw(display);
+      clouds.draw(display);
       gamejs.event.get().forEach(handle);
    };
+
+   /**
+    * main constructor
+    */
+
+   var background = gamejs.image.load('images/background.png');
+   var SCREEN_DIMENSION = background.getSize();
+   var display = gamejs.display.setMode(SCREEN_DIMENSION);
+   // hackish, disable right click
+   disableMouseSelect();
+   // hackish, attaching class property once ready thus image loaded
+   CROSSHAIR_MOVE = gamejs.image.load('images/circle-02.png');
+   display.blit(background);
+   var vehicles = new gamejs.sprite.Group();
+   var clouds = new gamejs.sprite.Group();
+   // frigattes
+   for (var i=0;i<5; i++) {
+      var v = new Vehicle();
+      v.mass = 4;
+      v.maxForce = 0.1;
+      v.maxSpeed = 0.3; // per second
+      v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Frigate.png'), [0.5, 0.5]);
+      vehicles.add(v);
+   };
+   // fighter
+   for (var i=0;i<10;i++) {
+      var v = new Vehicle();
+      v.mass = 0.06;
+      v.maxForce = 0.005;
+      v.maxSpeed = 0.7;
+      v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Fighter1.png'), [1, 1]);
+      vehicles.add(v);
+   }
+   // battleship
+   for (var i=0;i<1;i++) {
+      var v = new Vehicle();
+      v.mass = 24;
+      v.maxForce = 0.2;
+      v.maxSpeed = 0.15;
+      v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Battleship.png'), [0.5, 0.5]);
+      vehicles.add(v);
+   }
+   for (var i=0;i<20;i++) {
+      clouds.add(new ProjectileCloud([200 + Math.random() * 200, 200 + Math.random() * 200], [20, 20]));
+   }
    gamejs.time.fpsCallback(tick, this, 26);
    });
