@@ -158,6 +158,10 @@ function Vehicle() {
 
    this.draw = function(display) {
       this.image = gamejs.transform.rotate(this.originalImage, this.orientation);
+      var thrustPercent = $v.len(this.velocity) / this.maxSpeed;
+      var backProjected = $v.multiply($v.unit(this.velocity), -this.originalImage.rect.width/2 - 3 * thrustPercent);
+      gamejs.draw.line(display, 'rgba(248, 15, 15, 10)', this.rect.center,
+         $v.add(this.rect.center, backProjected), thrustPercent * (5 + this.maxForce * 65));
       display.blit(this.image, this.rect);
       /*
        debug physics
