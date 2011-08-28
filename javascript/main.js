@@ -105,11 +105,11 @@ function glowRect(display, rect, width) {
    return;
 }
 
-function glowCircle(display, pos, radius, width) {
+function glowCircle(display, rgbaPart, pos, radius, width) {
    gamejs.draw.circle(display, '#ffffff', pos, radius, 1);
    for (var i=0;i<width;i++) {
-      var a = 0.5 - (0.48 * (i/width));
-      gamejs.draw.circle(display, 'rgba(12,4,118,' + a + ')', pos, radius+i, 1);
+      var a = 0.6 - (0.48 * (i/width));
+      gamejs.draw.circle(display, rgbaPart + a + ')', pos, radius+i, 1);
    };
 };
 
@@ -119,7 +119,7 @@ function glowCircle(display, pos, radius, width) {
 var HUD_FONT = new gamejs.font.Font('15px');
 function drawVehicleHud(display, vehicle) {
    //glowRect(display, vehicle.rect, 5);
-   glowCircle(display, vehicle.rect.center, vehicle.rect.width / 1.5, 8);
+   glowCircle(display, 'rgba(187,190,255,', vehicle.rect.center, vehicle.rect.width / 1.5, 8);
    gamejs.draw.line(display, '#0c0476', vehicle.rect.center, vehicle.behaviour.target, 3);
    drawCrossHair(display, vehicle.behaviour.target);
    display.blit(HUD_FONT.render('Speed ' + (''+$v.len(vehicle.velocity)).substring(0,5)), vehicle.rect.bottomleft);
