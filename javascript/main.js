@@ -7,6 +7,30 @@ var gamejs = require('gamejs');
 var $v = require('gamejs/utils/vectors');
 var $o = require('gamejs/utils/objects');
 var $m = require('gamejs/utils/math');
+var anis = require('./animations');
+
+function Explosion(pos, scale) {
+   Explosion.superConstructor.apply(this, arguments);
+
+   scale = scale || [1,1];
+   this.draw = function(display) {
+      display.blit(animation.image, pos);
+   };
+
+   this.update = function(msDuration) {
+      animation.update(msDuration);
+      if (animation.isFinished()) {
+         this.kill();
+      }
+   };
+   var explosionSheet = new anis.SpriteSheet('images/explosion.png', {width: 64, height: 64, scale: [0.5, 0.5]});
+   var animation = new anis.Animation(explosionSheet, {'exploding': [0,15, false]}, 10);
+   animation.start('exploding');
+   var soundName = EXPLOSION_SOUNDS[parseInt(Math.random() * EXPLOSION_SOUNDS.length - 1)];
+   (new gamejs.mixer.Sound(soundName)).play();
+   return this;
+};
+$o.extend(Explosion, gamejs.sprite.Sprite);
 
 function ProjectileCloud(pos, direction) {
    ProjectileCloud.superConstructor.apply(this, arguments);
@@ -14,11 +38,20 @@ function ProjectileCloud(pos, direction) {
    var particles = [];
    this.pos = pos;
    this.direction = $v.unit(direction);
+   this.lifeDuration = 0;
+   // bad this can not be random
+   this.maxLife = 3 + (Math.random());
 
    this.update = function(msDuration) {
       var speed = 80; // pixels per second
       var delta = $v.multiply(this.direction, speed * (msDuration/1000));
       this.rect.moveIp(delta);
+      this.lifeDuration += (msDuration / 1000);
+      if (this.lifeDuration > this.maxLife && !this.isDead()) {
+         // FIXME a global
+         explosions.add(new Explosion(this.rect.center, [0.5, 0.5]));
+         this.kill();
+      }
       return;
    };
 
@@ -225,17 +258,26 @@ function disableMouseSelect() {
 /**
  * MAIN
  */
+var vehicles = new gamejs.sprite.Group();
+var clouds = new gamejs.sprite.Group();
+var explosions = new gamejs.sprite.Group();
+
 var UNIT_SELECTED_SOUNDS = [
    'sounds/unit_selected.ogg',
    'sounds/unit_ready.ogg',
    'sounds/unit_selected_2.ogg',
    'sounds/unit_ready_2.ogg'
 ];
+var EXPLOSION_SOUNDS = [
+   'sounds/explode.ogg',
+   'sounds/explodemini.ogg'
+];
 gamejs.preload([
    'images/spaceships/Battleship.png',
    'images/spaceships/Frigate.png',
    'images/spaceships/Fighter1.png',
 
+   'images/explosion.png',
    'images/background.png',
    'images/triangle-03-whole.png',
    'images/cross-01-whole.png',
@@ -246,7 +288,7 @@ gamejs.preload([
 
    'sounds/negative_2.ogg',
 
-].concat(UNIT_SELECTED_SOUNDS));
+].concat(UNIT_SELECTED_SOUNDS).concat(EXPLOSION_SOUNDS));
 gamejs.ready(function() {
 
    /**
@@ -353,13 +395,14 @@ gamejs.ready(function() {
       }
       vehicles.draw(display);
       clouds.draw(display);
+      explosions.update(msDuration);
+      explosions.draw(display);
       gamejs.event.get().forEach(handle);
    };
 
    /**
     * main constructor
     */
-
    var background = gamejs.image.load('images/background.png');
    var SCREEN_DIMENSION = background.getSize();
    var display = gamejs.display.setMode(SCREEN_DIMENSION);
@@ -368,8 +411,6 @@ gamejs.ready(function() {
    // hackish, attaching class property once ready thus image loaded
    CROSSHAIR_MOVE = gamejs.image.load('images/circle-02.png');
    display.blit(background);
-   var vehicles = new gamejs.sprite.Group();
-   var clouds = new gamejs.sprite.Group();
    // frigattes
    for (var i=0;i<5; i++) {
       var v = new Vehicle();
