@@ -133,7 +133,7 @@ gamejs.ready(function() {
    for (var i=0;i<5; i++) {
       var v = new Vehicle(eventHandler);
       v.mass = 4;
-      v.maxForce = 0.1;
+      v.maxForce = 0.08;
       v.maxSpeed = 0.2; // per second
       v.health = 1.2;
       v.position = [200 + (200 * i), 50];
@@ -167,7 +167,7 @@ gamejs.ready(function() {
    for (var i=0;i<10; i++) {
       var v = new Vehicle(eventHandler);
       v.mass = 4;
-      v.maxForce = 0.1;
+      v.maxForce = 0.08;
       v.maxSpeed = 0.2; // per second
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/BomberC.png'), [0.5, 0.5]);
       v.position = [100 + i * 150, 800 ]; // 20 + Math.random() * 800

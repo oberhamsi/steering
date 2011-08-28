@@ -34,9 +34,18 @@ var EventHandler = exports.EventHandler = function(vehicles) {
             sounds.unitSelected();
             gamejs.log('vehicle selected ', selectedVehicles);
          } else if (selectedVehicles) {
-            selectedVehicles.forEach(function(v) {
+            var poses = [];
+            if (selectedVehicles.length) {
+               for (var i=0;i<selectedVehicles.length;i++) {
+                  poses.push([
+                     pos[0] + (i/2 * 20 - 10),
+                     pos[1] + (i/2 * 20 - 10)
+                  ]);
+               }
+            }
+            selectedVehicles.forEach(function(v, idx) {
                v.behaviour.type = 'arrival';
-               v.behaviour.target = pos;
+               v.behaviour.target = poses[idx]
             });
             sounds.unitMove();
             gamejs.log('Vehicle order confirmed ', pos);
