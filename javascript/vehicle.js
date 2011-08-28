@@ -43,8 +43,8 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
          // explode
          for (var i=0; i<Math.ceil(this.mass);i++) {
             var pos = [
-               this.rect.top + Math.random() * this.rect.width,
-               this.rect.left + Math.random() * this.rect.height
+               this.rect.left + Math.random() * this.rect.width - 64,
+               this.rect.top + Math.random() * this.rect.height - 64
             ];
             eventHandler.custom({type: 'spawnExplosion', arguments: [pos, [2, 2]]});
          }
