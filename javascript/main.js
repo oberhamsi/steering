@@ -244,6 +244,8 @@ gamejs.preload([
    'sounds/engine_0.ogg',
    'sounds/engine_1.ogg',
 
+   'sounds/negative_2.ogg',
+
 ].concat(UNIT_SELECTED_SOUNDS));
 gamejs.ready(function() {
 
@@ -281,7 +283,6 @@ gamejs.ready(function() {
             var soundName = 'sounds/engine_' + Math.round(Math.random() * 1) + '.ogg';
             (new gamejs.mixer.Sound(soundName)).play();
             gamejs.log('Vehicle order confirmed ', pos);
-            //selectedVehicles = null;
          }
          selectRect = null;
          selectDown = null;
@@ -299,6 +300,7 @@ gamejs.ready(function() {
          selectRect = null;
          selectDown = null;
          selectedVehicles = null;
+         (new gamejs.mixer.Sound('sounds/negative_2.ogg')).play();
       } else if((event.type === gamejs.event.KEY_UP)) {
          if (selectedVehicles) {
             var fireWeapon = false;
