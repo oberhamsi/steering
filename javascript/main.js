@@ -13,10 +13,10 @@ function ProjectileCloud(pos, direction) {
 
    var particles = [];
    this.pos = pos;
-   this.direction = direction;
+   this.direction = $v.unit(direction);
 
    this.update = function(msDuration) {
-      var speed = 5; // pixels per second
+      var speed = 80; // pixels per second
       var delta = $v.multiply(this.direction, speed * (msDuration/1000));
       this.rect.moveIp(delta);
       return;
@@ -40,10 +40,18 @@ function ProjectileCloud(pos, direction) {
    };
    var width = max[0] - min[0] || 1;
    var height = max[1] - min[1] || 1;
-   this.rect = new gamejs.Rect(min, [width, height]);
+   var pos = [
+      min[0] - 10,
+      min[1] - 10
+   ];
+   var dim = [
+      width + 20,
+      height + 20
+   ];
+   this.rect = new gamejs.Rect(pos, dim);
    this.image = new gamejs.Surface(this.rect);
    particles.forEach(function(p) {
-      glowCircle(this.image, 'rgba(255, 0, 0,', $v.subtract(p, $v.subtract(pos, [width/2, height/2])), 1, 3);
+      glowCircle(this.image, 'rgba(255, 0, 0,', $v.subtract(p, pos), 1, 3);
    }, this);
    return this;
 };
@@ -69,6 +77,15 @@ function Vehicle() {
       type: 'seek',
       target: [20 + Math.random() * 800, 20 + Math.random() * 800],
    };
+   this.weapons = [
+      {
+         type: 'ProjectileCloud',
+         displayName: 'EMP Cooldown',
+         key: gamejs.event.K_SPACE,
+         cooldownDuration: 3, // in seconds
+         cooldownStatus: 3
+      }
+   ];
 
    this.update = function(msDuration) {
       steeringDirection = [0,0];
@@ -80,7 +97,11 @@ function Vehicle() {
                this.maxSpeed
             );
          steeringDirection = $v.subtract(desiredVelocity, this.velocity);
-      };
+      } else if (beh.type === 'stop') {
+         if ($v.len(this.velocity) > 0.001) {
+            steeringDirection = $v.multiply(this.velocity, -1);
+         }
+      }
 
       // physical model, determines new velocity and position depending
       // on steering direction, and as limited maxForce and maxSpeed.
@@ -90,6 +111,16 @@ function Vehicle() {
       this.velocity = $v.truncate($v.add(this.velocity, acceleration), this.maxSpeed);
       this.position = $v.add(this.position, this.velocity);
       this.orientation = $m.degrees($v.angle([1,0], this.velocity));
+
+      // weapon cooldown
+      this.weapons.forEach(function(w) {
+         if (w.cooldownDuration > w.cooldownStatus) {
+            w.cooldownStatus += (msDuration/1000);
+         }
+         if (w.cooldownStatus > w.cooldownDuration) {
+            w.cooldownStatus = w.cooldownDuration;
+         }
+      });
    };
 
    this.draw = function(display) {
@@ -160,12 +191,28 @@ function glowCircle(display, rgbaPart, pos, radius, width) {
  */
 var HUD_FONT = new gamejs.font.Font('15px');
 function drawVehicleHud(display, vehicle) {
-   //glowRect(display, vehicle.rect, 5);
-   glowCircle(display, 'rgba(187,190,255,', vehicle.rect.center, vehicle.rect.width / 1.5, 8);
-   gamejs.draw.line(display, '#0c0476', vehicle.rect.center, vehicle.behaviour.target, 3);
-   drawCrossHair(display, vehicle.behaviour.target);
-   var displaySpeed = parseInt(100 * $v.len(vehicle.velocity) / vehicle.maxSpeed, 10);
-   display.blit(HUD_FONT.render('Thrust ' + displaySpeed + '%'), vehicle.rect.bottomleft);
+      glowCircle(display, 'rgba(187,190,255,', vehicle.rect.center, vehicle.rect.width / 1.5, 8);
+   if (vehicle.behaviour.type !== 'stop') {
+      gamejs.draw.line(display, 'white', vehicle.rect.center, vehicle.behaviour.target, 2);
+      drawCrossHair(display, vehicle.behaviour.target);
+   }
+   var thrustPercent = $v.len(vehicle.velocity) / vehicle.maxSpeed;
+   var displaySpeed = parseInt(100 * thrustPercent, 10);
+   var color = 'white';
+   if (thrustPercent > 0.8) {
+      color = '#04750b';
+   }
+   display.blit(HUD_FONT.render('Thrust ' + displaySpeed + '%', color), vehicle.rect.bottomleft);
+   var pos = vehicle.rect.bottomleft;
+   vehicle.weapons.forEach(function(w) {
+      pos = $v.add(pos, [0, 15]);
+      var displayCooldown = parseInt(100 * w.cooldownStatus / w.cooldownDuration, 10);
+      var color = 'white';
+      if (w.cooldownStatus >= w.cooldownDuration) {
+         color = '#04750b';
+      }
+      display.blit(HUD_FONT.render(w.displayName + ' ' + displayCooldown + '%', color), pos);
+   });
 
 };
 // disable normal browser mouse select
@@ -203,42 +250,43 @@ gamejs.ready(function() {
    /**
     * handle events
     */
-   var selectedVehicle = null;
-   var multiSelectedVehicles = null;
+   var selectedVehicles = null;
    var selectDown = null;
    var selectRect = null;
    function handle(event) {
+      /** MOUSE 0 DOWN **/
       if ((event.type === gamejs.event.MOUSE_DOWN) &&
          (event.button === 0)) {
-         if (!selectedVehicle && !multiSelectedVehicles) {
+         if (!selectedVehicles) {
             selectDown = event.pos;
          }
+      /** MOUSE 0 UP **/
       } else if ((event.type === gamejs.event.MOUSE_UP) &&
            (event.button === 0) ) {
          var pos = event.pos;
          var vehiclesClicked = vehicles.collidePoint(event.pos);
          if (selectRect) {
-            multiSelectedVehicles = vehicles.sprites().filter(function(v) {
+            selectedVehicles = vehicles.sprites().filter(function(v) {
                return (v.rect.collideRect(selectRect));
             });
          } else if (vehiclesClicked && vehiclesClicked.length) {
             // vehicle select?
-            selectedVehicle = vehiclesClicked[0];
+            selectedVehicles = [vehiclesClicked[0]];
             var soundName = UNIT_SELECTED_SOUNDS[parseInt(Math.random() * UNIT_SELECTED_SOUNDS.length - 1)];
             (new gamejs.mixer.Sound(soundName)).play();
-            gamejs.log('vehicle selected ', selectedVehicle);
-         } else if (selectedVehicle || multiSelectedVehicles) {
-            (selectedVehicle && [selectedVehicle] || multiSelectedVehicles).forEach(function(v) {
+            gamejs.log('vehicle selected ', selectedVehicles);
+         } else if (selectedVehicles) {
+            selectedVehicles.forEach(function(v) {
                v.behaviour.target = pos;
             });
             var soundName = 'sounds/engine_' + Math.round(Math.random() * 1) + '.ogg';
             (new gamejs.mixer.Sound(soundName)).play();
             gamejs.log('Vehicle order confirmed ', pos);
-            selectedVehicle = null;
-            multiSelectedVehicles = null;
+            //selectedVehicles = null;
          }
          selectRect = null;
          selectDown = null;
+      /** MOUSE MOTION **/
       } else if ((event.type === gamejs.event.MOUSE_MOTION) && selectDown) {
          var delta = [event.pos[0] - selectDown[0], event.pos[1] - selectDown[1]];
          if ($v.len(delta) > 10) {
@@ -246,11 +294,33 @@ gamejs.ready(function() {
          } else {
             selectRect = null;
          }
+      /** MOUSE 0 UP **/
       } else if((event.type === gamejs.event.MOUSE_UP) && event.button === 2) {
          selectRect = null;
          selectDown = null;
-         selectedVehicle = null;
-         multiSelectedVehicles = null;
+         selectedVehicles = null;
+      } else if((event.type === gamejs.event.KEY_UP)) {
+         if (selectedVehicles) {
+            var fireWeapon = false;
+            selectedVehicles.forEach(function(v) {
+               v.weapons.forEach(function(w) {
+                  if (w.key === event.key && w.cooldownStatus >= w.cooldownDuration) {
+                     if (w.type === 'ProjectileCloud') {
+                        w.cooldownStatus = 0;
+                        clouds.add(new ProjectileCloud(v.rect.center, v.velocity));
+                        fireWeapon = true;
+                     }
+                  }
+               });
+            });
+            if (!fireWeapon) {
+               if (event.key == gamejs.event.K_s) {
+                  selectedVehicles.forEach(function(v) {
+                     v.behaviour.type = 'stop';
+                  });
+               }
+            }
+         }
       }
    };
 
@@ -271,10 +341,8 @@ gamejs.ready(function() {
             gamejs.log('Killed ', c);
          }
       });
-      if (selectedVehicle && selectedVehicle.behaviour.target) {
-         drawVehicleHud(display, selectedVehicle);
-      } else if (multiSelectedVehicles && multiSelectedVehicles.length) {
-         multiSelectedVehicles.forEach(function(v) {
+      if (selectedVehicles && selectedVehicles.length) {
+         selectedVehicles.forEach(function(v) {
             drawVehicleHud(display, v);
          });
       }
@@ -326,9 +394,6 @@ gamejs.ready(function() {
       v.maxSpeed = 0.15;
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Battleship.png'), [0.5, 0.5]);
       vehicles.add(v);
-   }
-   for (var i=0;i<20;i++) {
-      clouds.add(new ProjectileCloud([200 + Math.random() * 200, 200 + Math.random() * 200], [10, 15]));
    }
    gamejs.time.fpsCallback(tick, this, 26);
    });

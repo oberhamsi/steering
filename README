@@ -1,9 +1,9 @@
 Controls
 
- * left click: select unit
- * drag rect: select multiple  units
- * right click: deselect selected units
-
+ * `left click` select unit
+ * `drag rect` select multiple  units
+ * `right click` deselect unit(s)
+ * `s` stop selected unit(s)
 Tech
 
 simple vehicle steering behaviour as desribed in http://www.red3d.com/cwr/steer/gdc99/
