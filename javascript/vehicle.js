@@ -10,9 +10,10 @@ var drawCrossHair = require('./draw').drawCrossHair;
 /**
  * Vehicle
  */
-var Vehicle = exports.Vehicle = function () {
+var Vehicle = exports.Vehicle = function (eventHandler) {
    Vehicle.superConstructor.apply(this, arguments);
 
+   this.health = 1;
    this.mass = 8;
    this.position = [20 + Math.random() * 900, 100 ]; // 20 + Math.random() * 800
    this.velocity = [0, 0];
@@ -38,6 +39,19 @@ var Vehicle = exports.Vehicle = function () {
    ];
 
    this.update = function(msDuration) {
+
+      if (this.health <= 0 && !this.isDead()) {
+         // explode
+         for (var i=0; i<Math.ceil(this.mass);i++) {
+            var pos = [
+               this.rect.top + Math.random() * this.rect.width,
+               this.rect.left + Math.random() * this.rect.height
+            ];
+            eventHandler.custom({type: 'spawnExplosion', arguments: [pos, [2, 2]]});
+         }
+         this.kill();
+      };
+
       steeringDirection = [0,0];
       // behaviour model, determines steering direction
       var beh = this.behaviour;
@@ -103,6 +117,7 @@ var Vehicle = exports.Vehicle = function () {
       display.blit(HUD_FONT.render('Thrust ' + displaySpeed + '%', color), this.rect.bottomleft);
       */
       var pos = this.rect.bottomleft;
+      display.blit(Vehicle.HUD_FONT.render('Health ' + parseInt(100 * this.health, 10)), pos);
       this.weapons.forEach(function(w) {
          pos = $v.add(pos, [0, 15]);
          var displayCooldown = parseInt(100 * w.cooldownStatus / w.cooldownDuration, 10);

@@ -57,7 +57,7 @@ var EventHandler = exports.EventHandler = function(vehicles) {
          selectRect = null;
          selectDown = null;
          selectedVehicles = null;
-         sounds.deselect();
+         sounds.unitDeselect();
       } else if((event.type === gamejs.event.KEY_UP)) {
          if (selectedVehicles) {
             var fireWeapon = false;

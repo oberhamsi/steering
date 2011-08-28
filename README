@@ -4,16 +4,17 @@ Controls
  * `drag rect` select multiple  units
  * `right click` deselect unit(s)
  * `s` stop selected unit(s)
+ * `space` fire front salvo
+
 Tech
 
 simple vehicle steering behaviour as desribed in http://www.red3d.com/cwr/steer/gdc99/
 
 Todos
 
- * ammunition
+ * laser
  * behaviour: follow / arrival
- * glow
- * scrollable playing field
+ * better behaviour when moving: also avoid other friendly ships
  * server
 
 

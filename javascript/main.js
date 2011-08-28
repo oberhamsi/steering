@@ -41,6 +41,12 @@ gamejs.preload([
    'images/spaceships/Corvette.png',
    'images/spaceships/Fighter1.png',
 
+   'images/spaceships/BattleshipC.png',
+   'images/spaceships/CorvetteC.png',
+   'images/spaceships/Fighter1C.png',
+   'images/spaceships/BomberC.png',
+
+
    'images/explosion.png',
    'images/background.png',
    'images/triangle-03-whole.png',
@@ -60,13 +66,14 @@ gamejs.ready(function() {
       eventHandler.update(msDuration);
       clouds.update(msDuration);
       vehicles.update(msDuration);
+      enemies.update(msDuration);
       explosions.update(msDuration);
       eventHandler.getCustom().forEach(function(event) {
          if (event.type === 'spawnExplosion') {
             // double constructor call to correctly emulate
-            var explosion = new Explosion();
-            Explosion.apply(explosion, event.arguments);
-            explosions.add(explosion);
+            var ex = new Explosion();
+            Explosion.apply(ex, event.arguments);
+            explosions.add(ex);
          } else if (event.type == 'spawnProjectileCloud') {
             event.arguments.unshift(eventHandler)
             var pc = new ProjectileCloud();
@@ -81,10 +88,25 @@ gamejs.ready(function() {
             gamejs.log('Killed ', c);
          }
       });
+      // weapon effect
+
+      gamejs.sprite.groupCollide(clouds, enemies, true, false).forEach(function(coll) {
+         coll.b.health -= (0.3 * msDuration/1000);
+         eventHandler.custom({type: 'spawnExplosion', arguments: [coll.a.getForwardPosition(coll.b.rect.center)]});
+      });
+      gamejs.sprite.groupCollide(explosions, enemies).forEach(function(coll) {
+         coll.b.health -= (0.1 * msDuration/1000);
+      });
+      gamejs.sprite.groupCollide(explosions, vehicles).forEach(function(coll) {
+         coll.b.health -= (0.1 * msDuration/1000);
+      });
+
       // draw
+      enemies.draw(display);
       vehicles.draw(display);
       clouds.draw(display);
       explosions.draw(display);
+      eventHandler.draw(display);
       if (eventHandler.selectedVehicles && eventHandler.selectedVehicles.length) {
          eventHandler.selectedVehicles.forEach(function(v) {
             v.drawHud(display);
@@ -96,6 +118,7 @@ gamejs.ready(function() {
     * main constructor
     */
    var vehicles = new gamejs.sprite.Group();
+   var enemies = new gamejs.sprite.Group();
    var clouds = new gamejs.sprite.Group();
    var explosions = new gamejs.sprite.Group();
    var eventHandler = new EventHandler(vehicles);
@@ -108,30 +131,44 @@ gamejs.ready(function() {
    disableMouseSelect();
    // frigattes
    for (var i=0;i<5; i++) {
-      var v = new Vehicle();
+      var v = new Vehicle(eventHandler);
       v.mass = 4;
       v.maxForce = 0.1;
       v.maxSpeed = 0.3; // per second
+      v.health = 1.2;
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Corvette.png'), [0.5, 0.5]);
       vehicles.add(v);
    };
    // fighter
    for (var i=0;i<10;i++) {
-      var v = new Vehicle();
+      var v = new Vehicle(eventHandler);
       v.mass = 0.06;
       v.maxForce = 0.005;
       v.maxSpeed = 0.7;
+      v.health = 0.5;
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Fighter1.png'), [1, 1]);
       vehicles.add(v);
    }
    // battleship
    for (var i=0;i<1;i++) {
-      var v = new Vehicle();
+      var v = new Vehicle(eventHandler);
       v.mass = 24;
       v.maxForce = 0.2;
       v.maxSpeed = 0.15;
+      v.health = 3;
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Battleship.png'), [0.5, 0.5]);
       vehicles.add(v);
    }
+   // enemies
+   // FIXME different
+   for (var i=0;i<10; i++) {
+      var v = new Vehicle(eventHandler);
+      v.mass = 4;
+      v.maxForce = 0.1;
+      v.maxSpeed = 0.3; // per second
+      v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/BomberC.png'), [1, 1]);
+      v.position = [20 + Math.random() * 900, 500 ]; // 20 + Math.random() * 800
+      enemies.add(v);
+   };
    gamejs.time.fpsCallback(tick, this, 26);
    });

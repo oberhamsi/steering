@@ -79,12 +79,6 @@ Animation.prototype.update = function(msDuration) {
    return;
 };
 
-Animation.prototype.isFinished = function() {
-   if (!this.currentAnimation) return true;
-   if (this.currentFrame > this.spec[this.currentAnimation][1]) return true;
-   return false;
-};
-
 Animation.prototype.clone = function() {
    return new Animation(this.spriteSheet, this.spec, this.fps);
 };

@@ -14,6 +14,9 @@ var glowCircle = require('./draw').glowCircle;
 var Explosion = exports.Explosion = function (pos, scale) {
    Explosion.superConstructor.apply(this, arguments);
 
+   // initial constructor call
+   if (!pos) return this;
+
    scale = scale || [1,1];
    this.draw = function(display) {
       display.blit(animation.image, pos);
@@ -21,13 +24,15 @@ var Explosion = exports.Explosion = function (pos, scale) {
 
    this.update = function(msDuration) {
       animation.update(msDuration);
-      if (animation.isFinished()) {
+      if (animation.loopFinished) {
          this.kill();
       }
    };
-   var explosionSheet = new anis.SpriteSheet('images/explosion.png', {width: 64, height: 64, scale: [0.5, 0.5]});
+
+   var explosionSheet = new anis.SpriteSheet('images/explosion.png', {width: 64, height: 64, scale: scale});
    var animation = new anis.Animation(explosionSheet, {'exploding': [0,15, false]}, 10);
    animation.start('exploding');
+   this.rect = new gamejs.Rect(pos, animation.image.getSize());
    sounds.explosion();
    return this;
 };
@@ -56,10 +61,17 @@ var ProjectileCloud = exports.ProjectileCloud = function (eventHandler, pos, dir
       this.rect.moveIp(delta);
       this.lifeDuration += (msDuration / 1000);
       if (this.lifeDuration > this.maxLife && !this.isDead()) {
-         eventHandler.custom({type: 'spawnExplosion', arguments: [this.rect.center, [0.5, 0.5]]});
+         eventHandler.custom({type: 'spawnExplosion', arguments: [this.rect.center, [0.25,0.25]]});
          this.kill();
       }
       return;
+   };
+
+   this.getForwardPosition = function(target) {
+      var delta = $v.subtract(target, this.rect.center);
+      var dlen = $v.len(delta);
+      delta = $v.unit(delta);
+      return $v.add(this.rect.center, $v.multiply(delta, dlen/2));
    };
 
    this.draw = function(display) {
