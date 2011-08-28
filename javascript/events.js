@@ -35,7 +35,7 @@ var EventHandler = exports.EventHandler = function(vehicles) {
             gamejs.log('vehicle selected ', selectedVehicles);
          } else if (selectedVehicles) {
             selectedVehicles.forEach(function(v) {
-               v.behaviour.type = 'seek';
+               v.behaviour.type = 'arrival';
                v.behaviour.target = pos;
             });
             sounds.unitMove();

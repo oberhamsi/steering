@@ -19,12 +19,14 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
    this.velocity = [0, 0];
    this.maxForce = 0.5;
    this.maxSpeed = 1.5; // per second
+   this.slowingDistance = 100;
+
    // FIXME orientation either as either scalar angle or 2d vector
    this.originalImage = gamejs.image.load('images/spaceships/Corvette.png');
    this.image = this.originalImage.clone();
    // set by user
    this.behaviour = {
-      type: 'seek',
+      type: 'arrival',
       target: [1024/2, 786/2],
    };
    this.weapons = [
@@ -63,8 +65,20 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
       } else if (beh.type === 'stop') {
          if ($v.len(this.velocity) > 0.001) {
             steeringDirection = $v.multiply(this.velocity, -1);
+         } else {
+            beh.type = 'stop';
          }
-      }
+      } else if (beh.type === 'arrival') {
+         var targetOffset = $v.subtract(beh.target, this.position);
+         var distance = $v.len(targetOffset);
+         if (distance < 5) {
+            beh.type = 'stop';
+         }
+         var rampedSpeed = this.maxSpeed * (distance / this.slowingDistance);
+         var clippedSpeed = Math.min(rampedSpeed, this.maxSpeed);
+         var desiredVelocity = $v.multiply(targetOffset, (clippedSpeed / distance));
+         var steeringDirection = $v.subtract(desiredVelocity, this.velocity);
+      };
 
       // physical model, determines new velocity and position depending
       // on steering direction, and as limited maxForce and maxSpeed.
