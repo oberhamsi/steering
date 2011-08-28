@@ -1,4 +1,23 @@
+Controls
+
+ * left click: select unit
+ * drag rect: select multiple  units
+ * right click: deselect selected units
+
+Tech
+
 simple vehicle steering behaviour as desribed in http://www.red3d.com/cwr/steer/gdc99/
+
+Todos
+
+ * ammunition
+ * behaviour: follow / arrival
+ * glow
+ * scrollable playing field
+ * server
+
+
+Copyleft
 
 http://opengameart.org/content/spaceships2-top-down
 http://opengameart.org/content/gui-sound-effects

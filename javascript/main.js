@@ -89,12 +89,37 @@ function disableMouseSelect() {
    document.body.oncontextmenu = function() { return false; };
 }
 
+function glowRect(display, rect, width) {
+   var r = rect.clone();
+   var STEP_SIZE = 1;
+   gamejs.draw.rect(display, '#ffffff', rect, STEP_SIZE * 2);
+   for (var i=0;i<width;i++) {
+      r.left -= STEP_SIZE;
+      r.top -= STEP_SIZE;
+
+      r.width += STEP_SIZE*2;
+      r.height += STEP_SIZE*2;
+      var a = 0.5 - ( 0.48 *  (i/width) );
+      gamejs.draw.rect(display, 'rgba(12,4,118,' + a + ')', r, STEP_SIZE);
+   }
+   return;
+}
+
+function glowCircle(display, pos, radius, width) {
+   gamejs.draw.circle(display, '#ffffff', pos, radius, 1);
+   for (var i=0;i<width;i++) {
+      var a = 0.5 - (0.48 * (i/width));
+      gamejs.draw.circle(display, 'rgba(12,4,118,' + a + ')', pos, radius+i, 1);
+   };
+};
+
 /**
  *
  */
 var HUD_FONT = new gamejs.font.Font('15px');
 function drawVehicleHud(display, vehicle) {
-   gamejs.draw.rect(display, '#0c0476', vehicle.rect, 3);
+   //glowRect(display, vehicle.rect, 5);
+   glowCircle(display, vehicle.rect.center, vehicle.rect.width / 1.5, 8);
    gamejs.draw.line(display, '#0c0476', vehicle.rect.center, vehicle.behaviour.target, 3);
    drawCrossHair(display, vehicle.behaviour.target);
    display.blit(HUD_FONT.render('Speed ' + (''+$v.len(vehicle.velocity)).substring(0,5)), vehicle.rect.bottomleft);
