@@ -103,7 +103,7 @@ function Vehicle() {
    this.maxSpeed = 1.5; // per second
    // FIXME orientation either as either scalar angle or 2d vector
    this.orientation = 0;
-   this.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Frigate.png'), [0.3, 0.3]);
+   this.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Corvette.png'), [0.3, 0.3]);
    this.image = this.originalImage.clone();
    // set by user
    this.behaviour = {
@@ -274,7 +274,7 @@ var EXPLOSION_SOUNDS = [
 ];
 gamejs.preload([
    'images/spaceships/Battleship.png',
-   'images/spaceships/Frigate.png',
+   'images/spaceships/Corvette.png',
    'images/spaceships/Fighter1.png',
 
    'images/explosion.png',
@@ -417,7 +417,7 @@ gamejs.ready(function() {
       v.mass = 4;
       v.maxForce = 0.1;
       v.maxSpeed = 0.3; // per second
-      v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Frigate.png'), [0.5, 0.5]);
+      v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Corvette.png'), [0.5, 0.5]);
       vehicles.add(v);
    };
    // fighter
