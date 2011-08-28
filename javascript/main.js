@@ -164,7 +164,8 @@ function drawVehicleHud(display, vehicle) {
    glowCircle(display, 'rgba(187,190,255,', vehicle.rect.center, vehicle.rect.width / 1.5, 8);
    gamejs.draw.line(display, '#0c0476', vehicle.rect.center, vehicle.behaviour.target, 3);
    drawCrossHair(display, vehicle.behaviour.target);
-   display.blit(HUD_FONT.render('Speed ' + (''+$v.len(vehicle.velocity)).substring(0,5)), vehicle.rect.bottomleft);
+   var displaySpeed = parseInt(100 * $v.len(vehicle.velocity) / vehicle.maxSpeed, 10);
+   display.blit(HUD_FONT.render('Thrust ' + displaySpeed + '%'), vehicle.rect.bottomleft);
 
 };
 // disable normal browser mouse select
@@ -327,7 +328,7 @@ gamejs.ready(function() {
       vehicles.add(v);
    }
    for (var i=0;i<20;i++) {
-      clouds.add(new ProjectileCloud([200 + Math.random() * 200, 200 + Math.random() * 200], [20, 20]));
+      clouds.add(new ProjectileCloud([200 + Math.random() * 200, 200 + Math.random() * 200], [10, 15]));
    }
    gamejs.time.fpsCallback(tick, this, 26);
    });
