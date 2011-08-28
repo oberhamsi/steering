@@ -136,6 +136,7 @@ gamejs.ready(function() {
       v.maxForce = 0.1;
       v.maxSpeed = 0.3; // per second
       v.health = 1.2;
+      v.position = [200 + (200 * i), 50];
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Corvette.png'), [0.5, 0.5]);
       vehicles.add(v);
    };
@@ -146,6 +147,7 @@ gamejs.ready(function() {
       v.maxForce = 0.005;
       v.maxSpeed = 0.7;
       v.health = 0.5;
+      v.position = [50 + (170 * i), 80];
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Fighter1.png'), [1, 1]);
       vehicles.add(v);
    }
@@ -156,6 +158,7 @@ gamejs.ready(function() {
       v.maxForce = 0.2;
       v.maxSpeed = 0.15;
       v.health = 3;
+      v.position = [500 + (100 * i), 150];
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Battleship.png'), [0.5, 0.5]);
       vehicles.add(v);
    }
@@ -167,7 +170,7 @@ gamejs.ready(function() {
       v.maxForce = 0.1;
       v.maxSpeed = 0.3; // per second
       v.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/BomberC.png'), [1, 1]);
-      v.position = [20 + Math.random() * 900, 500 ]; // 20 + Math.random() * 800
+      v.position = [100 + i * 150, 800 ]; // 20 + Math.random() * 800
       enemies.add(v);
    };
    gamejs.time.fpsCallback(tick, this, 26);

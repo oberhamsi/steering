@@ -20,13 +20,12 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
    this.maxForce = 0.5;
    this.maxSpeed = 1.5; // per second
    // FIXME orientation either as either scalar angle or 2d vector
-   this.orientation = 0;
-   this.originalImage = gamejs.transform.scale(gamejs.image.load('images/spaceships/Corvette.png'), [0.3, 0.3]);
+   this.originalImage = gamejs.image.load('images/spaceships/Corvette.png');
    this.image = this.originalImage.clone();
    // set by user
    this.behaviour = {
       type: 'seek',
-      target: [20 + Math.random() * 800, 20 + Math.random() * 800],
+      target: [1024/2, 786/2],
    };
    this.weapons = [
       {
