@@ -38,8 +38,8 @@ var EventHandler = exports.EventHandler = function(vehicles) {
             if (selectedVehicles.length) {
                for (var i=0;i<selectedVehicles.length;i++) {
                   poses.push([
-                     pos[0] + (i/2 * 20 - 10),
-                     pos[1] + (i/2 * 20 - 10)
+                     pos[0] + (i/2 * 60 - 10),
+                     pos[1] + (i/2 * 60 - 10)
                   ]);
                }
             }
