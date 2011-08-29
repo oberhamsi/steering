@@ -1,6 +1,7 @@
 var gamejs = require('gamejs');
 var $o = require('gamejs/utils/objects');
 var $v = require('gamejs/utils/vectors');
+var $m = require('gamejs/utils/math');
 var sounds = require('./sounds');
 
 var EventHandler = exports.EventHandler = function(vehicles) {
@@ -34,13 +35,19 @@ var EventHandler = exports.EventHandler = function(vehicles) {
             sounds.unitSelected();
             gamejs.log('vehicle selected ', selectedVehicles);
          } else if (selectedVehicles) {
+            var centers = selectedVehicles.map(function(v) {
+               return v.rect.center;
+            });
+            // put selected vehicles on a line
+            var centroid = $m.centroid(centers);
+            var path = $v.subtract(centroid, pos);
+            var targetDelta = $v.unit($v.rotate(path, Math.PI/2));
             var poses = [];
             if (selectedVehicles.length) {
                for (var i=0;i<selectedVehicles.length;i++) {
-                  poses.push([
-                     pos[0] + (i/2 * 60 - 10),
-                     pos[1] + (i/2 * 60 - 10)
-                  ]);
+                  var f = i - selectedVehicles.length/2;
+                  var t = $v.add(pos, $v.multiply(targetDelta, f * 50));
+                  poses.push(t);
                }
             }
             selectedVehicles.forEach(function(v, idx) {
