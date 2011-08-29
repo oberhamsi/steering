@@ -86,8 +86,10 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
          // temporary circle radius for collision detection
          this.groups.forEach(function(group) {
             group.forEach(function(sprite) {
+               if (this.mass > sprite.mass) return;
+
                var delta = $v.subtract(this.rect.center, sprite.rect.center);
-               if ($v.len(delta) <= this.radius + sprite.radius) {
+               if ($v.len(delta) <= (this.radius + sprite.radius)/2) {
                   delta = $v.multiply($v.unit(delta), 1/this.radius);
                   repulsive = $v.add(repulsive, delta);
                };
