@@ -82,7 +82,7 @@ var EventHandler = exports.EventHandler = function(vehicles) {
                v.weapons.forEach(function(w) {
                   if (w.key === event.key && w.cooldownStatus >= w.cooldownDuration) {
                      if (w.type === 'ProjectileCloud') {
-                        custom({type: 'spawnProjectileCloud', arguments: [v.rect.center, v.velocity]});
+                        custom({type: 'spawnProjectileCloud', arguments: [v.rect.center, v.orientationVector]});
                         w.cooldownStatus = 0;
                         fireWeapon = true;
                      } else if(w.type.indexOf('Laser') > -1) {

@@ -20,6 +20,7 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
    this.maxForce = 0.5;
    this.maxSpeed = 1.5; // per second
    this.slowingDistance = 100;
+   this.orientation = 0;
 
    // FIXME orientation either as either scalar angle or 2d vector
    this.originalImage = gamejs.image.load('images/spaceships/Corvette.png');
@@ -203,6 +204,9 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
    $o.accessor(this, 'radius', function() {
       var s = this.image.getSize()
       return Math.max(s[0], s[1]);
+   });
+   $o.accessor(this, 'orientationVector', function() {
+      return $v.rotate([1, 0], $m.radians(this.orientation));
    });
    return this;
 };
