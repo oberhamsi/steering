@@ -67,6 +67,7 @@ var EventHandler = exports.EventHandler = function(vehicles) {
          selectDown = null;
          selectedVehicles = null;
          sounds.unitDeselect();
+      /** KEY UP **/
       } else if((event.type === gamejs.event.KEY_UP)) {
          if (selectedVehicles) {
             var fireWeapon = false;
@@ -76,6 +77,11 @@ var EventHandler = exports.EventHandler = function(vehicles) {
                      if (w.type === 'ProjectileCloud') {
                         custom({type: 'spawnProjectileCloud', arguments: [v.rect.center, v.velocity]});
                         w.cooldownStatus = 0;
+                        fireWeapon = true;
+                     } else if(w.type.indexOf('Laser') > -1) {
+                        // FIXME custom({type: '
+                        w.cooldownStatus = 0;
+                        w.isActive = true;
                         fireWeapon = true;
                      }
                   }

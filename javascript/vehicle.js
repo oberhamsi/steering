@@ -36,13 +36,24 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
          key: gamejs.event.K_SPACE,
          cooldownDuration: 3, // in seconds
          cooldownStatus: 3
+      },
+      {
+         type: 'FrontLaser',
+         displayName: 'Laser',
+         key: gamejs.event.K_w,
+         cooldownDuration: 3,
+         cooldownStatus: 3,
+         isActive: false,
+         activeDuration: 2.5,
+         activeStatus: 0,
+         strength: 1
       }
    ];
 
    this.update = function(msDuration) {
 
+      // explode when dead
       if (this.health <= 0 && !this.isDead()) {
-         // explode
          for (var i=0; i<Math.ceil(this.mass);i++) {
             var pos = [
                this.rect.left + Math.random() * this.rect.width - 64,
@@ -109,22 +120,44 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
 
       // weapon cooldown
       this.weapons.forEach(function(w) {
-         if (w.cooldownDuration > w.cooldownStatus) {
-            w.cooldownStatus += (msDuration/1000);
-         }
-         if (w.cooldownStatus > w.cooldownDuration) {
-            w.cooldownStatus = w.cooldownDuration;
+         if (w.isActive) {
+            w.activeStatus += msDuration/1000;
+            if (w.activeStatus >= w.activeDuration) {
+               w.isActive = false;
+               w.activeStatus = 0;
+            }
+         } else {
+            if (w.cooldownDuration > w.cooldownStatus) {
+               w.cooldownStatus += (msDuration/1000);
+            }
+            if (w.cooldownStatus > w.cooldownDuration) {
+               w.cooldownStatus = w.cooldownDuration;
+            }
          }
       });
    };
 
    this.draw = function(display) {
-      this.image = gamejs.transform.rotate(this.originalImage, this.orientation);
+      // thrust
       var thrustPercent = $v.len(this.velocity) / this.maxSpeed;
       var backProjected = $v.multiply($v.unit(this.velocity), -this.originalImage.rect.width/2 - 3 * thrustPercent);
-      gamejs.draw.line(display, 'rgba(200, 15, 15, 10)', this.rect.center,
-         $v.add(this.rect.center, backProjected), thrustPercent * (2 + this.maxForce * 65));
+      gamejs.draw.line(display, 'rgba(204, 255, 51, 1)', this.rect.center,
+      $v.add(this.rect.center, backProjected), thrustPercent * (2 + this.maxForce * 65));
+
+      // lasers
+      this.weapons.forEach(function(w) {
+         if (w.type.indexOf('Laser') < 0 || !w.isActive) return;
+
+         if (w.type === 'FrontLaser') {
+            var forwardPoint = $v.add(this.rect.center, $v.multiply($v.unit(this.velocity), w.strength * 500));
+            gamejs.draw.line(display, 'rgba(255,51,0,0.6)', this.rect.center, forwardPoint, w.strength * 10);
+         }
+      }, this);
+
+      // sprite
+      this.image = gamejs.transform.rotate(this.originalImage, this.orientation);
       display.blit(this.image, this.rect);
+
       /*
        debug physics
       var nextPosition = $v.add(this.position, $v.multiply(this.velocity, 10));
@@ -136,7 +169,7 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
    this.drawHud = function(display) {
       glowCircle(display, 'rgba(187,190,255,', this.rect.center, this.radius, 8);
       if (this.behaviour.type === 'arrival') {
-         gamejs.draw.line(display, 'white', this.rect.center, this.behaviour.target, 2);
+         //gamejs.draw.line(display, 'white', this.rect.center, this.behaviour.target, 1);
          drawCrossHair(display, this.behaviour.target);
       }
       /*var thrustPercent = $v.len(this.velocity) / this.maxSpeed;
