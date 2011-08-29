@@ -89,7 +89,6 @@ gamejs.ready(function() {
          }
       });
       // weapon effect
-
       gamejs.sprite.groupCollide(clouds, enemies, true, false).forEach(function(coll) {
          coll.b.health -= (0.3 * msDuration/1000);
          eventHandler.custom({type: 'spawnExplosion', arguments: [coll.a.getForwardPosition(coll.b.rect.center)]});
@@ -99,6 +98,27 @@ gamejs.ready(function() {
       });
       gamejs.sprite.groupCollide(explosions, vehicles).forEach(function(coll) {
          coll.b.health -= (0.1 * msDuration/1000);
+      });
+      vehicles.sprites().map(function(v) {
+         var beams = v.getLaserBeams();
+      });
+      vehicles.forEach(function(v) {
+         v.getLaserBeams().forEach(function(lb) {
+            enemies.sprites().forEach(function(e) {
+               var enemyLines = [
+                  [e.rect.topleft, e.rect.topright],
+                  [e.rect.topleft, e.rect.bottomleft],
+                  [e.rect.topright, e.rect.bottomright],
+                  [e.rect.bottomleft, e.rect.bottomright],
+               ];
+               var isHit = enemyLines.some(function(l) {
+                  return $m.lineSegmentsIntersect(l[0], l[1], lb.from, lb.to);
+               });
+               if (isHit) {
+                  e.health -= (lb.strength / 10);
+               }
+            });
+         });
       });
 
       // draw

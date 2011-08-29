@@ -138,6 +138,28 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
       });
    };
 
+   this.getLaserBeams = function() {
+      var beams = [];
+      // lasers
+      this.weapons.forEach(function(w) {
+         if (w.type.indexOf('Laser') < 0 || !w.isActive) return;
+
+         if (w.type === 'FrontLaser') {
+            var len = w.strength * 500;
+            var thick = w.strength * 10
+            var forwardPoint = $v.add(this.rect.center, $v.multiply($v.unit(this.velocity), len ));
+            beams.push({
+               from: this.rect.center,
+               to: forwardPoint,
+               len: len,
+               thick: thick,
+               strength: w.strength
+            });
+         }
+      }, this);
+      return beams;
+   };
+
    this.draw = function(display) {
       // thrust
       var thrustPercent = $v.len(this.velocity) / this.maxSpeed;
@@ -146,15 +168,9 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
       $v.add(this.rect.center, backProjected), thrustPercent * (2 + this.maxForce * 65));
 
       // lasers
-      this.weapons.forEach(function(w) {
-         if (w.type.indexOf('Laser') < 0 || !w.isActive) return;
-
-         if (w.type === 'FrontLaser') {
-            var forwardPoint = $v.add(this.rect.center, $v.multiply($v.unit(this.velocity), w.strength * 500));
-            gamejs.draw.line(display, 'rgba(255,51,0,0.6)', this.rect.center, forwardPoint, w.strength * 10);
-         }
-      }, this);
-
+      this.getLaserBeams().forEach(function(lr) {
+         gamejs.draw.line(display, 'rgba(255,51,0,0.6)', lr.from, lr.to, lr.thick);
+      });
       // sprite
       this.image = gamejs.transform.rotate(this.originalImage, this.orientation);
       display.blit(this.image, this.rect);
