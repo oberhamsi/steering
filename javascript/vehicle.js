@@ -32,7 +32,7 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
    this.weapons = [
       {
          type: 'ProjectileCloud',
-         displayName: 'EMP Cooldown',
+         displayName: 'Torpedo',
          key: gamejs.event.K_SPACE,
          cooldownDuration: 3, // in seconds
          cooldownStatus: 3
@@ -132,7 +132,7 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
       var pos = this.rect.bottomleft;
       display.blit(Vehicle.HUD_FONT.render('Health ' + parseInt(100 * this.health, 10)), pos);
       this.weapons.forEach(function(w) {
-         pos = $v.add(pos, [0, 15]);
+         pos = $v.add(pos, [0, 10]);
          var displayCooldown = parseInt(100 * w.cooldownStatus / w.cooldownDuration, 10);
          var color = 'white';
          if (w.cooldownStatus >= w.cooldownDuration) {
@@ -151,5 +151,5 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
 
    return this;
 };
-Vehicle.HUD_FONT = new gamejs.font.Font('15px');
+Vehicle.HUD_FONT = new gamejs.font.Font('5px');
 $o.extend(Vehicle, gamejs.sprite.Sprite);
