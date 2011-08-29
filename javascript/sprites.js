@@ -12,11 +12,11 @@ var glowCircle = require('./draw').glowCircle;
  * Explosion
  */
 var Explosion = exports.Explosion = function (pos, scale) {
-   Explosion.superConstructor.apply(this, arguments);
-
    // initial constructor call
    if (!pos) return this;
 
+   Explosion.superConstructor.apply(this, arguments);
+   
    scale = scale || [1,1];
    this.draw = function(display) {
       display.blit(animation.image, pos);
@@ -43,10 +43,10 @@ $o.extend(Explosion, gamejs.sprite.Sprite);
  * ProjectileCloud
  */
 var ProjectileCloud = exports.ProjectileCloud = function (eventHandler, pos, direction) {
-   ProjectileCloud.superConstructor.apply(this, arguments);
-
    // first constructor call only to get this value
    if (!direction) return this;
+
+   ProjectileCloud.superConstructor.apply(this, arguments);
 
    var particles = [];
    this.pos = pos;

@@ -66,7 +66,7 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
          if ($v.len(this.velocity) > 0.001) {
             steeringDirection = $v.multiply(this.velocity, -1);
          } else {
-            beh.type = 'stop';
+            beh.type = 'stopped';
          }
       } else if (beh.type === 'arrival') {
          var targetOffset = $v.subtract(beh.target, this.position);
@@ -78,7 +78,23 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
          var clippedSpeed = Math.min(rampedSpeed, this.maxSpeed);
          var desiredVelocity = $v.multiply(targetOffset, (clippedSpeed / distance));
          var steeringDirection = $v.subtract(desiredVelocity, this.velocity);
-      };
+      }
+
+      // seperation
+      if (beh.type == 'stopped') {
+         var repulsive = [0,0];
+         // temporary circle radius for collision detection
+         this.groups.forEach(function(group) {
+            group.forEach(function(sprite) {
+               var delta = $v.subtract(this.rect.center, sprite.rect.center);
+               if ($v.len(delta) <= this.radius + sprite.radius) {
+                  delta = $v.multiply($v.unit(delta), 1/this.radius);
+                  repulsive = $v.add(repulsive, delta);
+               };
+            }, this);
+         }, this);
+         steeringDirection = $v.subtract(repulsive, this.velocity);
+      }
 
       // physical model, determines new velocity and position depending
       // on steering direction, and as limited maxForce and maxSpeed.
@@ -116,8 +132,8 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
    };
 
    this.drawHud = function(display) {
-      glowCircle(display, 'rgba(187,190,255,', this.rect.center, this.rect.width / 1.5, 8);
-      if (this.behaviour.type !== 'stop') {
+      glowCircle(display, 'rgba(187,190,255,', this.rect.center, this.radius, 8);
+      if (this.behaviour.type === 'arrival') {
          gamejs.draw.line(display, 'white', this.rect.center, this.behaviour.target, 2);
          drawCrossHair(display, this.behaviour.target);
       }
@@ -149,6 +165,10 @@ var Vehicle = exports.Vehicle = function (eventHandler) {
       );
    });
 
+   $o.accessor(this, 'radius', function() {
+      var s = this.image.getSize()
+      return Math.max(s[0], s[1]);
+   });
    return this;
 };
 Vehicle.HUD_FONT = new gamejs.font.Font('5px');
